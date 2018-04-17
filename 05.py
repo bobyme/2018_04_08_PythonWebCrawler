@@ -1,5 +1,6 @@
 import requests
 import time
+import datetime
 import re, urllib
 import os
 from bs4 import BeautifulSoup
@@ -23,7 +24,9 @@ def get_articles(dom, date):
     divs = soup.find_all('div', 'r-ent')
     for d in divs:
         date1=date
-        date2=str(d.find('div', 'date').string)
+        date2=str(d.find('div', 'date').string.lstrip())
+        date3= datetime.datetime.strptime(date2,"%m/%d")
+        print("date3:"+str(date3))
 
         #if d.find('div', 'date').string == date:  # 發文日期正確
         if date1 == date2.lstrip():  # 發文日期正確
@@ -99,8 +102,10 @@ PTT_URL = 'https://www.ptt.cc'
 
 page = get_web_page('https://www.ptt.cc/bbs/Beauty/index.html')
 if page:
-    date = time.strftime("%m/%d").lstrip('0')  # 今天日期, 去掉開頭的 '0' 以符合 PTT 網站格式
-    print("today: "+date)
+    #date = time.strftime("%m/%d").lstrip('0')  # 今天日期, 去掉開頭的 '0' 以符合 PTT 網站格式
+    date = time.strftime("%m/%d")
+    print(date)
+    #print("today: "+date)
     current_articles = get_articles(page, date)
     #print(current_articles)
     for article in current_articles:
