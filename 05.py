@@ -17,19 +17,24 @@ def get_web_page(url):
 
 #<a class="btn wide" href="/bbs/Beauty/index2446.html">‹ 上頁</a>
 
-def get_articles(dom, date):
+def get_articles(dom, currentdate,dateoffset):
     soup = BeautifulSoup(dom, 'html.parser')
-
+    offset=datetime.timedelta(days=dateoffset)
     articles = []  # 儲存取得的文章資料
     divs = soup.find_all('div', 'r-ent')
     for d in divs:
-        date1=date
-        date2=str(d.find('div', 'date').string.lstrip())
-        date3= datetime.datetime.strptime(date2,"%m/%d")
-        print("date3:"+str(date3))
+        pttdate=str(d.find('div', 'date').string.lstrip())
+        spttdate='/'.join([str(currentdate.year),pttdate])
+        print("spttdate:"+spttdate)
+        pttdate = datetime.datetime.strptime(spttdate, "%Y/%m/%d").date()
+        print("currentdate:"+str(currentdate))
+        print("pttdate:" + str(pttdate))
+        print(type(currentdate))
+        print(type(pttdate))
+        print(str(currentdate-pttdate))
 
         #if d.find('div', 'date').string == date:  # 發文日期正確
-        if date1 == date2.lstrip():  # 發文日期正確
+        if pttdate <=currentdate+offset:  # 發文日期正確
             # 取得推文數
             push_count = 0
             if d.find('div', 'nrec').string:
@@ -103,10 +108,11 @@ PTT_URL = 'https://www.ptt.cc'
 page = get_web_page('https://www.ptt.cc/bbs/Beauty/index.html')
 if page:
     #date = time.strftime("%m/%d").lstrip('0')  # 今天日期, 去掉開頭的 '0' 以符合 PTT 網站格式
-    date = time.strftime("%m/%d")
-    print(date)
+    currentdate= datetime.date.today()
+    date = time.strftime("%y/%m/%d")
+    print("CS"+str(date))
     #print("today: "+date)
-    current_articles = get_articles(page, date)
+    current_articles = get_articles(page, currentdate,dateoffset=0)
     #print(current_articles)
     for article in current_articles:
         print("CS No:"+str(article['push_count']))
