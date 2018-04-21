@@ -15,26 +15,35 @@ def get_web_page(url):
     else:
         return resp.text
 
-#<a class="btn wide" href="/bbs/Beauty/index2446.html">‹ 上頁</a>
+blacklist=["[公告] 表特板板規 (2015.2.12)","[公告] 不願上表特 ＆ 優文推薦 ＆ 檢舉建議專區","[公告] 對於謾罵，希望大家將心比心","[公告] 板規修訂 - 意淫文字","[公告] 偷拍相關板規修訂"]
 
 def get_articles(dom, currentdate,dateoffset):
+    print("008 get articles start=======")
     soup = BeautifulSoup(dom, 'html.parser')
     offset=datetime.timedelta(days=dateoffset)
+    pre_link=None
     articles = []  # 儲存取得的文章資料
+    latestdate=currentdate
     divs = soup.find_all('div', 'r-ent')
+    datetransfer=re.compile(r'(\d{4})\/(\d{2})\/(\d{2})')
     for d in divs:
         pttdate=str(d.find('div', 'date').string.lstrip())
         spttdate='/'.join([str(currentdate.year),pttdate])
-        print("spttdate:"+spttdate)
+        #print("spttdate:"+spttdate)
         pttdate = datetime.datetime.strptime(spttdate, "%Y/%m/%d").date()
-        print("currentdate:"+str(currentdate))
-        print("pttdate:" + str(pttdate))
-        print(type(currentdate))
-        print(type(pttdate))
-        print(str(currentdate-pttdate))
+        print("013:"+spttdate)
+        #spttdate=datetime.datetime.strftime('%Y_%m_%d', pttdate)
+        mo=datetransfer.findall(spttdate)
+        if mo:
+            print("014:"+mo.group(1))
+        #print("currentdate:"+str(currentdate))
+        #print("pttdate:" + str(pttdate))
+        #print(type(currentdate))
+        #print(type(pttdate))
+        #print(str(currentdate-pttdate))
 
         #if d.find('div', 'date').string == date:  # 發文日期正確
-        if pttdate <=currentdate+offset:  # 發文日期正確
+        if  currentdate-pttdate<=offset:  # 發文日期正確
             # 取得推文數
             push_count = 0
             if d.find('div', 'nrec').string:
@@ -47,32 +56,49 @@ def get_articles(dom, currentdate,dateoffset):
             if d.find('a'):  # 有超連結，表示文章存在，未被刪除
                 href = d.find('a')['href']
                 title = d.find('a').string
-                articles.append({
-                    'title': title,
-                    'href': href,
-                    'push_count': push_count
-                })
+                if title in blacklist:
+                    pass
+                else:
+                    articles.append({
+                        'date':spttdate,
+                        'title': title,
+                        'href': href,
+                        'push_count': push_count
+                    })
+        else :#日期不在區間內
+            if d.find('a'):
+                if d.find('a').string in blacklist:
+                    print("003"+str(d.find('a').string))
+                else:
+                    if latestdate>pttdate:
+                        print("004 late date str:"+d.find('a').string)
+                        latestdate=pttdate
+                        print("005 latestdate:"+str(latestdate))
+                        print(d.find('a').string)
+
+
     weblinks = soup.find_all('a', 'btn wide')
     #print(weblinks.pree)
     for weblink in weblinks:
        # print("CS:"+weblink.find('div','btn wide').string)
-        print(weblink.prettify())
-        print("cs1:"+str(weblink.find('a')))
-        print("cs2:" + str(type(weblink.find('a'))))
-        print("cs3:" + str(type(weblink)))
-        print("cs4:" + str(weblink.string))
+        #print(weblink.prettify())
+        #print("cs1:"+str(weblink.find('a')))
+        #print("cs2:" + str(type(weblink.find('a'))))
+        #print("cs3:" + str(type(weblink)))
+        #print("cs4:" + str(weblink.string))
         #if weblink.find('a',"btn wide"):
         if weblink.find('a'):
             print("cs:find"+weblink.find('a').string)
         else:
             print("cs:not find")
-       # if weblink.string == '‹ 上頁':
-       #     href = weblink['href']
-       #     print("cs:find pre-link")
+        if weblink.string == '‹ 上頁':
+            pre_link = weblink['href']
+            #print("cs find pre-link:"+pre_link)
+       #     print(type(href))
        #     articles.append({'pre_link':href})
-
-    print(articles)
-    return articles
+    #print(articles)
+    print("009 get articles end=======")
+    return articles,pre_link,latestdate
 
 
 def parse(dom):
@@ -84,13 +110,14 @@ def parse(dom):
             img_urls.append(link['href'])
     return img_urls
 
-def save(img_urls, title):
+def save(img_urls, title, date):
     if img_urls:
         try:
             dname = title.strip()  # 用 strip() 去除字串前後的空白
+            print("012:"+date+dname)
             os.makedirs(dname)
             for img_url in img_urls:
-                print("cs path:"+img_url)
+                #print("cs path:"+img_url)
                 if img_url.split('//')[1].startswith('m.'):
                     img_url = img_url.replace('//m.', '//i.')
                 if not img_url.split('//')[1].startswith('i.'):
@@ -105,20 +132,39 @@ def save(img_urls, title):
 
 PTT_URL = 'https://www.ptt.cc'
 
-page = get_web_page('https://www.ptt.cc/bbs/Beauty/index.html')
+
+#page = get_web_page('https://www.ptt.cc/bbs/Beauty/index.html')
+page = get_web_page('https://www.ptt.cc/bbs/Beauty/index2457.html')
+dateoffset = 10
+push_count_threshold = 50
 if page:
     #date = time.strftime("%m/%d").lstrip('0')  # 今天日期, 去掉開頭的 '0' 以符合 PTT 網站格式
     currentdate= datetime.date.today()
+    latestdate = datetime.date.today()
+
     date = time.strftime("%y/%m/%d")
     print("CS"+str(date))
     #print("today: "+date)
-    current_articles = get_articles(page, currentdate,dateoffset=0)
+
     #print(current_articles)
-    for article in current_articles:
-        print("CS No:"+str(article['push_count']))
-        if article["push_count"] >50:
-            page = get_web_page(PTT_URL + article['href'])
-            if page:
-                img_urls = parse(page)
-                save(img_urls, article['title'])
-                article['num_image'] = len(img_urls)
+    while currentdate-datetime.timedelta(days=dateoffset)<=latestdate:
+        print("latest date:"+str(latestdate))
+        current_articles, pre_link, latestdate = get_articles(page, currentdate, dateoffset)
+        print("001 CS latest date:"+str(type(latestdate)))
+        if pre_link==None:
+            print("011")
+            break
+        else:
+            print("002 :"+str(PTT_URL+pre_link))
+            page=get_web_page(PTT_URL+pre_link)
+            print("009 pre_link:" + PTT_URL +pre_link)
+            for article in current_articles:
+                #print("002 CS No:"+str(article['push_count']))
+
+                if article["push_count"] >push_count_threshold:
+                    page_data = get_web_page(PTT_URL + article['href'])
+                    print(article['title'])
+                    if page_data:
+                        img_urls = parse(page_data)
+                        save(img_urls, article['title'],article['date'])
+                        article['num_image'] = len(img_urls)
