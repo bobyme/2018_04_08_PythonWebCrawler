@@ -25,17 +25,20 @@ def get_articles(dom, currentdate,dateoffset):
     articles = []  # 儲存取得的文章資料
     latestdate=currentdate
     divs = soup.find_all('div', 'r-ent')
-    datetransfer=re.compile(r'(\d{4})\/(\d{2})\/(\d{2})')
+    datetransfer = re.compile(r'(\d{4})/(\d{1,2})/(\d{2})')
     for d in divs:
         pttdate=str(d.find('div', 'date').string.lstrip())
         spttdate='/'.join([str(currentdate.year),pttdate])
         #print("spttdate:"+spttdate)
         pttdate = datetime.datetime.strptime(spttdate, "%Y/%m/%d").date()
-        print("013:"+spttdate)
+        #print("013:"+spttdate)
         #spttdate=datetime.datetime.strftime('%Y_%m_%d', pttdate)
-        mo=datetransfer.findall(spttdate)
+        mo=datetransfer.search(spttdate)
         if mo:
-            print("014:"+mo.group(1))
+            spttdate=mo.group(1)+'_'+mo.group(2)+'_'+mo.group(3)
+        else:
+            print("015")
+
         #print("currentdate:"+str(currentdate))
         #print("pttdate:" + str(pttdate))
         #print(type(currentdate))
@@ -113,8 +116,8 @@ def parse(dom):
 def save(img_urls, title, date):
     if img_urls:
         try:
-            dname = title.strip()  # 用 strip() 去除字串前後的空白
-            print("012:"+date+dname)
+            dname = date+title.strip()  # 用 strip() 去除字串前後的空白
+            print("012:"+dname)
             os.makedirs(dname)
             for img_url in img_urls:
                 #print("cs path:"+img_url)
@@ -135,7 +138,7 @@ PTT_URL = 'https://www.ptt.cc'
 
 #page = get_web_page('https://www.ptt.cc/bbs/Beauty/index.html')
 page = get_web_page('https://www.ptt.cc/bbs/Beauty/index2457.html')
-dateoffset = 10
+dateoffset = 60
 push_count_threshold = 50
 if page:
     #date = time.strftime("%m/%d").lstrip('0')  # 今天日期, 去掉開頭的 '0' 以符合 PTT 網站格式

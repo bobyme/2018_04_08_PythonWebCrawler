@@ -5,3 +5,4 @@ bsObj = BeautifulSoup(html.read())
 print(bsObj.head)
 print(bsObj.body)
 print(bsObj.h1)
+
