@@ -115,7 +115,7 @@ PTT_URL = 'https://www.ptt.cc'
 
 
 page = get_web_page('https://www.ptt.cc/bbs/Beauty/index.html')
-dateoffset = 0
+dateoffset = 60
 push_count_threshold = 50
 if page:
     #date = time.strftime("%m/%d").lstrip('0')  # 今天日期, 去掉開頭的 '0' 以符合 PTT 網站格式
