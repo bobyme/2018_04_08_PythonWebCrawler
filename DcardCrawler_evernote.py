@@ -9,16 +9,12 @@ import docx
 
 
 
-
-
-
-
 url ='https://www.dcard.tw/_api/forums/sex/posts?popular=false'
 url_content='http://dcard.tw/_api/posts/'
 blacklist=["看板功能相關說明"]
 
-dateoffset=100
-likecount_threshod=400
+dateoffset=1
+likecount_threshod=100
 
 def get_web_page(url):
     resp = requests.get(
@@ -38,7 +34,9 @@ def getcontent(id):
     dcarddata = json.loads(post)
     return dcarddata["content"]
 
-def save(img_urls,dname,id,dlikecount):
+
+
+def DCardsave(img_urls,dname,id,dlikecount):
     if img_urls:
         os.makedirs(dname)
         currentdir=os.getcwd()
@@ -74,9 +72,6 @@ def DcardTransferS2D(sDate):
 
 
 scurrentdate,currentdate = DcardTransferS2D(str(datetime.date.today()))
-
-#print("002:"+str(currentdate))
-
 Dcarddoc = docx.Document()
 keeptracking=1
 dcardurl=url
@@ -94,7 +89,7 @@ while keeptracking==1:
                 dlikecount=data["likeCount"]
                 print("033:" + url_content + str(did))
                 #dexcerpt=data['excerpt']
-                save(data['media'],dname,did,dlikecount)
+                DCardsave(data['media'],dname,did,dlikecount)
         else:
             keeptracking=0
     if keeptracking==1:
