@@ -38,7 +38,7 @@ url ='https://www.dcard.tw/_api/forums/sex/posts?popular=false'
 url_content='http://dcard.tw/_api/posts/'
 blacklist=["看板功能相關說明"]
 dateoffset=1
-likecount_threshod=500
+likecount_threshod=460
 
 if auth_token == "Token_check":
     print("Please fill in your developer token")
@@ -108,6 +108,10 @@ def EvernoteAddNote(notedata):
     #note.title = "Test note from EDAMTest.py"
     note.title = notedata["Title"]
 
+    note.content = '<?xml version="1.0" encoding="UTF-8"?>'
+    note.content += '<!DOCTYPE en-note SYSTEM ' \
+                    '"http://xml.evernote.com/pub/enml2.dtd">'
+    note.content += '<en-note>%s<br/>' % notedata["Content"]
 
     # To include an attachment such as an image in a note, first create a Resource
     # for the attachment. At a minimum, the Resource contains the binary attachment
@@ -115,42 +119,38 @@ def EvernoteAddNote(notedata):
     # It can also include attributes such as filename and location.
     for root, dirs, files in os.walk(notedata["PicPath"], False):
         print("Root = ", root, "dirs = ", dirs, "files = ", files)
+    for file in files:
+        image_path=root+"/"+file
+        print("image_path:" + str(image_path))
+        with open(image_path, 'rb') as image_file:
+            image = image_file.read()
+        md5 = hashlib.md5()
+        md5.update(image)
+        hash = md5.digest()
 
-    image_path = constants_path = os.path.join(os.path.dirname(__file__), "enlogo.png")
-    print("image_path:" + str(image_path))
-    print("Path:" + os.path.dirname(__file__))
-    with open(image_path, 'rb') as image_file:
-        image = image_file.read()
-    md5 = hashlib.md5()
-    md5.update(image)
-    hash = md5.digest()
+        data = Types.Data()
+        data.size = len(image)
+        data.bodyHash = hash
+        data.body = image
 
-    data = Types.Data()
-    data.size = len(image)
-    data.bodyHash = hash
-    data.body = image
+        resource = Types.Resource()
+        resource.mime = 'image/jpg'
+        resource.data = data
 
-    resource = Types.Resource()
-    resource.mime = 'image/png'
-    resource.data = data
-
-    # Now, add the new Resource to the note's list of resources
-    note.resources = [resource]
-
-    # To display the Resource as part of the note's content, include an <en-media>
-    # tag in the note's ENML content. The en-media tag identifies the corresponding
-    # Resource using the MD5 hash.
-    hash_hex = binascii.hexlify(hash)
-    hash_str = hash_hex.decode("UTF-8")
-
-    # The content of an Evernote note is represented using Evernote Markup Language
-    # (ENML). The full ENML specification can be found in the Evernote API Overview
-    # at http://dev.evernote.com/documentation/cloud/chapters/ENML.php
-    note.content = '<?xml version="1.0" encoding="UTF-8"?>'
-    note.content += '<!DOCTYPE en-note SYSTEM ' \
-                    '"http://xml.evernote.com/pub/enml2.dtd">'
-    note.content +='<en-note>%s<br/>' % notedata["Content"]
-    #note.content += '<en-media type="image/png" hash="{}"/>'.format(hash_str)
+        # Now, add the new Resource to the note's list of resources
+        note.resources = [resource]
+        
+        # To display the Resource as part of the note's content, include an <en-media>
+        # tag in the note's ENML content. The en-media tag identifies the corresponding
+        # Resource using the MD5 hash.
+        hash_hex = binascii.hexlify(hash)
+        hash_str = hash_hex.decode("UTF-8")
+        
+        # The content of an Evernote note is represented using Evernote Markup Language
+        # (ENML). The full ENML specification can be found in the Evernote API Overview
+        # at http://dev.evernote.com/documentation/cloud/chapters/ENML.php
+        
+        note.content += '<en-media type="image/jpg" hash="{}"/>'.format(hash_str)
     note.content += '</en-note>'
 
     # Finally, send the new note to Evernote using the createNote method
