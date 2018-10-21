@@ -38,7 +38,7 @@ url ='https://www.dcard.tw/_api/forums/sex/posts?popular=false'
 url_content='http://dcard.tw/_api/posts/'
 blacklist=["看板功能相關說明"]
 dateoffset=1
-likecount_threshod=400
+likecount_threshod=500
 
 if auth_token == "Token_check":
     print("Please fill in your developer token")
@@ -113,6 +113,9 @@ def EvernoteAddNote(notedata):
     # for the attachment. At a minimum, the Resource contains the binary attachment
     # data, an MD5 hash of the binary data, and the attachment MIME type.
     # It can also include attributes such as filename and location.
+    for root, dirs, files in os.walk(notedata["PicPath"], False):
+        print("Root = ", root, "dirs = ", dirs, "files = ", files)
+
     image_path = constants_path = os.path.join(os.path.dirname(__file__), "enlogo.png")
     print("image_path:" + str(image_path))
     print("Path:" + os.path.dirname(__file__))
@@ -146,12 +149,9 @@ def EvernoteAddNote(notedata):
     note.content = '<?xml version="1.0" encoding="UTF-8"?>'
     note.content += '<!DOCTYPE en-note SYSTEM ' \
                     '"http://xml.evernote.com/pub/enml2.dtd">'
-    #note.content += '<en-note>+str(notedata["Content"])+<br/>'
-    note.content +='<en-note>%s</en-note>' % notedata["Content"]
-
-    #note.content += '<en-note>Here is the Evernote logo:<br/>'
+    note.content +='<en-note>%s<br/>' % notedata["Content"]
     #note.content += '<en-media type="image/png" hash="{}"/>'.format(hash_str)
-    #note.content += '</en-note>'
+    note.content += '</en-note>'
 
     # Finally, send the new note to Evernote using the createNote method
     # The new Note object that is returned will contain server-generated
